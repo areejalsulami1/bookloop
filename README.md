@@ -11,8 +11,8 @@
 - نظام إشعارات ذكي وتذكيري
 
 ## 🛠️ التقنيات المستخدمة:
-- Backend: Laravel
-- Database: MySQL / SQLite
+- Backend: Laravel-php
+- Database: MySQL 
 - Frontend: HTML, JavaScript
 - Auth: Firebase + JWT
   
