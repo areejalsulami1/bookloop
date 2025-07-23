@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <title>إنشاء حساب | Bookloop</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      direction: rtl;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f1f3f5;
+      margin: 0;
+      padding: 0;
+    }
+
+    .container {
+      max-width: 500px;
+      margin: 100px auto;
+      background-color: #fff;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+
+    h2 {
+      color: #003366;
+      margin-bottom: 20px;
+    }
+
+    input, select, button {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+    }
+
+    button {
+      background-color: #005f99;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #004c80;
+    }
+
+    .error {
+      color: red;
+      font-size: 14px;
+    }
+
+    .success {
+      color: green;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h2>إنشاء حساب جديد</h2>
+
+    <input type="text" id="name" placeholder="الاسم الكامل">
+    <input type="email" id="email" placeholder="البريد الإلكتروني">
+    <input type="password" id="password" placeholder="كلمة المرور">
+    
+    <select id="user_type">
+      <option value="">اختر نوع المستخدم</option>
+      <option value="lender">معير</option>
+      <option value="borrower">مستعير</option>
+      <option value="both">معير ومستعير</option>
+    </select>
+
+    <div class="error" id="errorMsg"></div>
+
+    <button onclick="register()">إنشاء حساب</button>
+  </div>
+
+  <script>
+    async function register() {
+      const name = document.getElementById("name").value.trim();
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
+      const user_type = document.getElementById("user_type").value;
+      const errorMsg = document.getElementById("errorMsg");
+      errorMsg.textContent = "";
+
+      if (!name || !email || !password || !user_type) {
+        errorMsg.textContent = "⚠️ الرجاء تعبئة جميع الحقول.";
+        return;
+      }
+
+      try {
+        const response = await fetch("http://127.0.0.1:8000/api/register", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+          },
+          body: JSON.stringify({ name, email, password, user_type })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          if (data.errors) {
+            errorMsg.textContent = Object.values(data.errors).flat().join(" ");
+          } else {
+            errorMsg.textContent = "❌ حدث خطأ أثناء التسجيل.";
+          }
+          return;
+        }
+
+        // حفظ بيانات المستخدم كاملة مع النوع
+        localStorage.setItem("user", JSON.stringify(data.user));
+
+        alert("✅ تم إنشاء الحساب بنجاح! الرجاء تسجيل الدخول.");
+        window.location.href = "login.html";
+
+      } catch (error) {
+        console.error("Register error:", error);
+        errorMsg.textContent = "❌ تعذر الاتصال بالخادم. حاول لاحقًا.";
+      }
+    }
+  </script>
+
+</body>
+</html>

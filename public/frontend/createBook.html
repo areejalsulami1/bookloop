@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <title>إضافة كتاب | Bookloop</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      direction: rtl;
+      background-color: #f0f2f5;
+      margin: 0;
+      padding: 0;
+    }
+
+    .container {
+      max-width: 500px;
+      margin: 80px auto;
+      background-color: #fff;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    input, textarea, button {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+
+    button {
+      background-color: #3f51b5;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    h2 {
+      text-align: center;
+      color: #3f51b5;
+    }
+
+    .message {
+      text-align: center;
+      margin-top: 15px;
+      color: green;
+    }
+
+    .error {
+      color: red;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>➕ إضافة كتاب جديد</h2>
+
+    <input type="text" id="title" placeholder="اسم الكتاب">
+    <input type="text" id="author" placeholder="اسم المؤلف">
+    <textarea id="description" placeholder="الوصف"></textarea>
+    <button onclick="addBook()">📚 إضافة الكتاب</button>
+
+    <div class="message" id="successMsg"></div>
+    <div class="error" id="errorMsg"></div>
+  </div>
+
+  <script>
+    // تحقق من وجود المستخدم وصلاحياته
+    const user = JSON.parse(localStorage.getItem("user"));
+    if (!user || (user.user_type !== "lender" && user.user_type !== "both")) {
+      document.body.innerHTML = "<p style='text-align:center; color:red;'>❌ لا تملك صلاحية الوصول إلى هذه الصفحة.</p>";
+      throw new Error("غير مصرح");
+    }
+
+    function addBook() {
+      const title = document.getElementById("title").value.trim();
+      const author = document.getElementById("author").value.trim();
+      const description = document.getElementById("description").value.trim();
+      const successMsg = document.getElementById("successMsg");
+      const errorMsg = document.getElementById("errorMsg");
+
+      successMsg.textContent = "";
+      errorMsg.textContent = "";
+
+      if (!title || !author || !description) {
+        errorMsg.textContent = "⚠️ الرجاء تعبئة جميع الحقول.";
+        return;
+      }
+
+      fetch("http://127.0.0.1:8000/api/books", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          title: title,
+          author: author,
+          description: description,
+          available: true,
+          user_id: user.id
+        })
+      })
+      .then(async res => {
+        const text = await res.text();
+        try {
+          const json = JSON.parse(text);
+          if (json && json.id) {
+            successMsg.textContent = "✅ تم إضافة الكتاب بنجاح!";
+            document.getElementById("title").value = "";
+            document.getElementById("author").value = "";
+            document.getElementById("description").value = "";
+          } else {
+            errorMsg.textContent = "❌ حدث خطأ أثناء الإضافة.";
+          }
+        } catch (e) {
+          console.error("الاستجابة ليست JSON:", text);
+          errorMsg.textContent = "❌ حدث خطأ غير متوقع.";
+        }
+      })
+      .catch(err => {
+        console.error("فشل الاتصال بالخادم:", err);
+        errorMsg.textContent = "❌ فشل في الاتصال بالخادم.";
+      });
+    }
+  </script>
+</body>
+</html>

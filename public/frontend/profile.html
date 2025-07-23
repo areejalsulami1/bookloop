@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8" />
+  <title>الملف الشخصي | Bookloop</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body {
+      background-color: #f0f2f5;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      direction: rtl;
+      margin: 0;
+      padding: 0;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 100px auto;
+      background-color: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .profile-info, .borrow-requests {
+      font-size: 18px;
+      color: #333;
+      margin-bottom: 30px;
+    }
+
+    .borrow-requests h3 {
+      margin-top: 30px;
+      color: #003366;
+    }
+
+    .borrow-request {
+      padding: 10px;
+      margin-bottom: 10px;
+      background: #f9f9f9;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+    }
+
+    .nav-buttons a {
+      display: inline-block;
+      margin-top: 20px;
+      padding: 10px 20px;
+      background-color: transparent;
+      border: 1px solid #aaa;
+      color: #333;
+      border-radius: 8px;
+      text-decoration: none;
+      transition: background-color 0.3s;
+    }
+
+    .nav-buttons a:hover {
+      background-color: #ddd;
+    }
+
+    .logout {
+      border-color: #cc0000;
+      color: #cc0000;
+    }
+
+    .logout:hover {
+      background-color: #fee;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- تحميل الهيدر -->
+  <script>
+    fetch('/frontend/header.html')
+      .then(res => res.text())
+      .then(html => document.body.insertAdjacentHTML('afterbegin', html));
+  </script>
+
+  <div class="container">
+    <h2>الملف الشخصي</h2>
+
+    <div class="profile-info" id="profileInfo">⏳ جاري تحميل البيانات...</div>
+
+    <div class="borrow-requests" id="borrowRequests">
+      <h3>📥 طلبات الاستعارة الخاصة بك:</h3>
+      <div id="requestsList">جاري التحميل...</div>
+    </div>
+
+    <div class="nav-buttons">
+      <a href="/frontend/home.html">🏠 الصفحة الرئيسية</a>
+      <a class="logout" onclick="logout()">🚪 تسجيل الخروج</a>
+    </div>
+  </div>
+
+  <script>
+    const user = JSON.parse(localStorage.getItem("user"));
+    const profileDiv = document.getElementById("profileInfo");
+    const requestsList = document.getElementById("requestsList");
+
+    if (!user) {
+      window.location.href = "/frontend/login.html";
+    } else {
+      profileDiv.innerHTML = `
+        👤 الاسم: <strong>${user.name}</strong><br>
+        📧 البريد الإلكتروني: <strong>${user.email}</strong><br>
+        🧭 النوع: <strong>${user.user_type || 'غير محدد'}</strong>
+      `;
+
+      fetch("http://127.0.0.1:8000/api/borrow-requests")
+        .then(res => res.json())
+        .then(data => {
+          const userRequests = data.filter(req => req.borrower_id === user.id);
+          if (userRequests.length === 0) {
+            requestsList.innerHTML = "📭 لا توجد طلبات استعارة بعد.";
+            return;
+          }
+
+          requestsList.innerHTML = "";
+          userRequests.forEach(req => {
+            const reqDiv = document.createElement("div");
+            reqDiv.className = "borrow-request";
+            reqDiv.innerHTML = `
+              <strong>📘 كتاب:</strong> ${req.book?.title || 'غير معروف'}<br>
+              <strong>📊 الحالة:</strong> ${req.status || 'غير محددة'}
+            `;
+            requestsList.appendChild(reqDiv);
+          });
+        })
+        .catch(err => {
+          console.error("❌ خطأ في تحميل الطلبات:", err);
+          requestsList.innerHTML = "❌ حدث خطأ أثناء تحميل الطلبات.";
+        });
+    }
+
+    function logout() {
+      localStorage.removeItem("user");
+      window.location.href = "/frontend/login.html";
+    }
+  </script>
+
+</body>
+</html>

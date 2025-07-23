@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8" />
+  <title>الرئيسية | Bookloop</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      direction: rtl;
+      background-color: #f8f9fa;
+    }
+
+    .hero-image {
+      width: 100%;
+      height: 400px;
+      background-image: url('/images/ethra2.jpg');
+      background-size: cover;
+      background-position: center;
+    }
+
+    .main-content {
+      max-width: 800px;
+      margin: 50px auto;
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+
+    h2 {
+      color: #003366;
+      margin-bottom: 20px;
+    }
+
+    .user-info {
+      font-size: 18px;
+      line-height: 2;
+      margin-bottom: 30px;
+    }
+
+    .nav-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      flex-wrap: wrap;
+      margin-bottom: 30px;
+    }
+
+    .nav-buttons a {
+      padding: 12px 25px;
+      text-decoration: none;
+      background-color: transparent;
+      color: #333;
+      border: 1px solid #aaa;
+      border-radius: 8px;
+      transition: background-color 0.3s;
+    }
+
+    .nav-buttons a:hover {
+      background-color: #ddd;
+    }
+
+    .about {
+      font-size: 16px;
+      color: #333;
+      padding-top: 20px;
+      border-top: 1px solid #ccc;
+    }
+
+    .logout {
+      border-color: #cc0000;
+      color: #cc0000;
+    }
+
+    .logout:hover {
+      background-color: #fee;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- تحميل الهيدر -->
+  <script>
+    fetch('/frontend/header.html')
+      .then(res => res.text())
+      .then(html => document.body.insertAdjacentHTML('afterbegin', html));
+  </script>
+
+  <!-- صورة الغلاف -->
+  <div class="hero-image"></div>
+
+  <div class="main-content">
+    <h2>📚 مرحبًا بك في <strong>Bookloop</strong></h2>
+
+    <div class="user-info" id="userInfo"></div>
+
+    <div class="nav-buttons" id="navButtons"></div>
+
+    <div class="about">
+      Bookloop هي منصة اجتماعية تهدف إلى رقمنة وتسهيل استعارة الكتب بين أفراد المجتمع، بحيث تكون وسيطًا بين المعير والمستعير لإتمام عملية الإعارة بسلاسة.
+    </div>
+  </div>
+
+  <!-- تحميل الفوتر -->
+  <script>
+    fetch('/frontend/footer.html')
+      .then(res => res.text())
+      .then(html => document.body.insertAdjacentHTML('beforeend', html));
+  </script>
+
+  <!-- عرض الأزرار حسب حالة المستخدم -->
+  <script>
+    const user = JSON.parse(localStorage.getItem("user"));
+    const userInfoDiv = document.getElementById("userInfo");
+    const navButtonsDiv = document.getElementById("navButtons");
+
+    if (user) {
+      userInfoDiv.innerHTML = `
+        👤 الاسم: <strong>${user.name}</strong><br>
+        📧 الإيميل: <strong>${user.email}</strong><br>
+        🧭 النوع: <strong>${user.user_type}</strong>
+      `;
+
+      navButtonsDiv.innerHTML = `
+        <a href="/frontend/book.html">📚 الكتب</a>
+        <a href="/frontend/map.html">📍 الخريطة</a>
+        ${user.user_type === 'lender' || user.user_type === 'both' ? `<a href="/frontend/createBook.html">➕ إضافة كتاب</a>` : ''}
+        <a href="/frontend/profile.html">👤 الملف الشخصي</a>
+        <a class="logout" onclick="logout()">🚪 تسجيل الخروج</a>
+      `;
+    } else {
+      userInfoDiv.innerHTML = ""; // لا تظهر أي رسالة
+
+      navButtonsDiv.innerHTML = `
+        <a href="/frontend/login.html">🔑 تسجيل الدخول</a>
+        <a href="/frontend/register.html">📝 إنشاء حساب</a>
+      `;
+    }
+
+    function logout() {
+      localStorage.removeItem("user");
+      window.location.href = "/frontend/login.html";
+    }
+  </script>
+
+</body>
+</html>

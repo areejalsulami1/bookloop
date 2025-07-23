@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8" />
+  <title>الكتب | Bookloop</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f8f9fa;
+      margin: 0;
+      direction: rtl;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 50px auto;
+      padding: 20px;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+
+    h2 {
+      color: #003366;
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .book {
+      border: 1px solid #ccc;
+      padding: 20px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      background-color: #fdfdfd;
+    }
+
+    .book strong {
+      color: #333;
+    }
+
+    .book p {
+      margin: 5px 0;
+    }
+
+    .book button {
+      padding: 10px 20px;
+      border: 1px solid #aaa;
+      border-radius: 8px;
+      background-color: transparent;
+      color: #333;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    .book button:hover {
+      background-color: #ddd;
+    }
+
+    .book .disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- تحميل الهيدر -->
+  <script>
+    fetch('/frontend/header.html')
+      .then(res => res.text())
+      .then(html => document.body.insertAdjacentHTML('afterbegin', html));
+  </script>
+
+  <div class="container">
+    <h2>📚 قائمة الكتب</h2>
+    <div id="booksContainer">⏳ جاري تحميل الكتب...</div>
+  </div>
+
+  <script>
+    window.addEventListener("DOMContentLoaded", function () {
+      const user = JSON.parse(localStorage.getItem("user"));
+      const booksContainer = document.getElementById("booksContainer");
+
+      if (!user) {
+        booksContainer.innerHTML = "⚠️ يجب تسجيل الدخول لعرض الكتب.";
+        return;
+      }
+
+      const userType = user.user_type?.toLowerCase().trim();
+      fetch("http://127.0.0.1:8000/api/books")
+        .then(response => response.json())
+        .then(books => {
+          if (!Array.isArray(books) || books.length === 0) {
+            booksContainer.innerHTML = "📭 لا توجد كتب حالياً.";
+            return;
+          }
+
+          booksContainer.innerHTML = "";
+          books.forEach(book => {
+            const bookDiv = document.createElement("div");
+            bookDiv.className = "book";
+
+            const isAvailable = book.available === 1 || book.available === true || book.available === "1";
+            const statusText = isAvailable ? "متاح" : "مستعار";
+
+            let borrowButton = "";
+            if ((userType === "borrower" || userType === "both") && isAvailable) {
+              borrowButton = `<button onclick="borrowBook(${book.id})">📥 طلب استعارة</button>`;
+            }
+
+            bookDiv.innerHTML = `
+              <p><strong>الاسم:</strong> ${book.title}</p>
+              <p><strong>الوصف:</strong> ${book.description}</p>
+              <p><strong>الحالة:</strong> ${statusText}</p>
+              ${borrowButton}
+            `;
+
+            booksContainer.appendChild(bookDiv);
+          });
+        })
+        .catch(err => {
+          booksContainer.innerHTML = "❌ حدث خطأ أثناء تحميل الكتب.";
+          console.error(err);
+        });
+
+      // إرسال طلب استعارة
+      window.borrowBook = function (bookId) {
+        fetch("http://127.0.0.1:8000/api/borrow-requests", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            book_id: bookId,
+            borrower_id: user.id
+          })
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.message) {
+            alert("✅ تم إرسال طلب الاستعارة بنجاح!");
+            window.location.reload();
+          } else {
+            alert("❌ حدث خطأ أثناء إرسال الطلب.");
+            console.error("Error:", data);
+          }
+        })
+        .catch(err => {
+          console.error("❌ خطأ في إرسال الطلب:", err);
+          alert("❌ حدث خطأ في الاتصال بالخادم.");
+        });
+      };
+    });
+  </script>
+
+  <!-- تحميل الفوتر -->
+  <script>
+    fetch('/frontend/footer.html')
+      .then(res => res.text())
+      .then(html => document.body.insertAdjacentHTML('beforeend', html));
+  </script>
+
+</body>
+</html>
